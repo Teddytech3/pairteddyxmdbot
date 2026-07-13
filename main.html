@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TEDDY-XMD Session</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    *{
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-image: url("https://files.catbox.moe/5ffdce.jpeg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      gap: 20px;
+    }
+
+    .logo {
+      color: #00ffae;
+      font-size: 38px;
+      font-weight: bold;
+      text-shadow: 0 0 20px #00ffae;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #ffffff;
+      font-size: 15px;
+      margin-top: -20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .btn {
+      --color: #00ffae;
+      --color2: rgb(0, 0, 0);
+
+      width: 230px;
+      padding: 0.9em 1.75em;
+      background: rgba(0,0,0,0.75);
+      border-radius: 8px;
+      border: 1px solid var(--color);
+      transition: .5s;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      z-index: 1;
+      font-weight: 600;
+      font-size: 16px;
+      text-transform: uppercase;
+      color: var(--color);
+      box-shadow: 0 0 15px rgba(0,255,174,.35);
+    }
+
+    .btn::after,
+    .btn::before {
+      content: '';
+      display: block;
+      height: 100%;
+      width: 100%;
+      transform: skew(90deg) translate(-50%, -50%);
+      position: absolute;
+      inset: 50%;
+      left: 25%;
+      z-index: -1;
+      transition: .5s ease-out;
+      background-color: var(--color);
+    }
+
+    .btn::before {
+      top: -50%;
+      left: -25%;
+      transform: skew(90deg) rotate(180deg) translate(-50%, -50%);
+    }
+
+    .btn:hover::before {
+      transform: skew(45deg) rotate(180deg) translate(-50%, -50%);
+    }
+
+    .btn:hover::after {
+      transform: skew(45deg) translate(-50%, -50%);
+    }
+
+    .btn:hover {
+      color: var(--color2);
+      box-shadow: 0 0 25px #00ffae;
+    }
+
+    .btn:active {
+      filter: brightness(.8);
+      transform: scale(.97);
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 15px;
+      color: #cccccc;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media(max-width:500px){
+      .btn{
+        width: 85%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">TEDDY-XMD</div>
+  <div class="subtitle">🤖 King of Automation 👑</div>
+
+  <button onclick="window.open('/pair')" class="btn">
+    PAIR CODE
+  </button>
+
+  <button onclick="window.open('/qr')" class="btn">
+    QR SCAN
+  </button>
+
+  <button onclick="window.open('https://github.com/Teddytech1/TEDDY-XMD')" class="btn">
+    REPO FORK
+  </button>
+
+  <div class="footer">
+    © TEDDY-XMD • Developer +254799963583
+  </div>
+
+</body>
+</html>
