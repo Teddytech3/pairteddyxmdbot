@@ -1,6 +1,10 @@
+const { webcrypto } = require('crypto');
+globalThis.crypto = webcrypto; // FIX: Required for Baileys pairing code on Node 18/20
+
 const { makeid } = require('./id');
 const express = require('express');
 const fs = require('fs');
+const path = require('path');
 const pino = require('pino');
 const {
     default: makeWASocket,
@@ -14,6 +18,10 @@ const {
 
 const router = express.Router();
 
+// Auto cleanup temp folder
+const TEMP_DIR = path.join(__dirname, 'temp');
+if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
+
 function removeFile(filePath) {
     if (!fs.existsSync(filePath)) return false;
     fs.rmSync(filePath, { recursive: true, force: true });
@@ -23,8 +31,13 @@ router.get('/', async (req, res) => {
     const id = makeid();
     let num = req.query.number;
 
+    if (!num) {
+        return res.status(400).send({ error: "Please provide ?number=2547XXXXXXXX" });
+    }
+
     async function TEDDY_XMD() {
-        const { state, saveCreds } = await useMultiFileAuthState('./temp/' + id);
+        const sessionPath = path.join(TEMP_DIR, id);
+        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
         try {
             const { version } = await fetchLatestBaileysVersion();
@@ -54,19 +67,15 @@ router.get('/', async (req, res) => {
                             text: '🤖 *TEDDY-XMD* 🤖\nGenerating your session, please wait a moment...'
                         });
 
-                        await delay(5000);
+                        await delay(3000);
 
-                        const data = fs.readFileSync(
-                            __dirname + `/temp/${id}/creds.json`
-                        );
-
+                        const credsPath = path.join(sessionPath, 'creds.json');
+                        const data = fs.readFileSync(credsPath);
                         const b64data = Buffer.from(data).toString('base64');
 
                         const session = await client.sendMessage(
                             client.user.id,
-                            {
-                                text: 'TEDDY-XMD:~' + b64data
-                            }
+                            { text: 'TEDDY-XMD:~' + b64data }
                         );
 
                         await client.sendMessage(
@@ -77,7 +86,7 @@ router.get('/', async (req, res) => {
 ║      TEDDY-XMD
 ╚════════════════════╝
 
-✅ Your WhatsApp account has been linked successfully.
+✅ Your WhatsApp account has been linked successfully!
 
 ⚠️ DO NOT share this Session ID with anyone.
 
@@ -86,68 +95,57 @@ TEDDY-XMD:~xxxxxxxxxxxxxxxx
 
 📌 Copy and paste the Session ID into the SESSION_ID variable during deployment.
 
-👨‍💻 Developer:
-https://wa.me/254799963583
-
-🤖 TEDDY-XMD
-👑 King of Automation 🚀`
+👨‍💻 Developer: https://wa.me/254799963583
+🤖 TEDDY-XMD | 👑 King of Automation 🚀`
                             },
                             { quoted: session }
                         );
 
-                        await delay(1000);
+                        await delay(2000);
                         await client.ws.close();
-
-                        removeFile('./temp/' + id);
+                        removeFile(sessionPath);
 
                     } catch (e) {
-                        console.log(
-                            'Error sending session messages:',
-                            e
-                        );
+                        console.log('Error sending session messages:', e);
+                        removeFile(sessionPath);
                     }
                 }
 
                 else if (connection === 'close') {
-                    const code =
-                        lastDisconnect?.error?.output?.statusCode;
-
+                    const code = lastDisconnect?.error?.output?.statusCode;
                     if (code !== DisconnectReason.loggedOut) {
+                        console.log("Reconnecting...");
                         await delay(5000);
                         TEDDY_XMD();
                     } else {
-                        removeFile('./temp/' + id);
+                        removeFile(sessionPath);
                     }
                 }
             });
 
+            // Request pairing code
             if (!client.authState.creds.registered) {
                 await delay(1500);
+                num = num.replace(/[^0-9]/g, '');
 
-                num = (num || '')
-                    .replace(/[^0-9]/g, '');
-
-                const code =
-                    await client.requestPairingCode(num);
+                const code = await client.requestPairingCode(num);
 
                 if (!res.headersSent) {
                     await res.send({
                         bot: 'TEDDY-XMD',
-                        session: 'TEDDY-XMD:~',
-                        code
+                        status: 'success',
+                        code: code
                     });
                 }
             }
 
         } catch (err) {
             console.log('Pair service error:', err);
-
-            removeFile('./temp/' + id);
-
+            removeFile(sessionPath);
             if (!res.headersSent) {
-                await res.send({
+                await res.status(500).send({
                     bot: 'TEDDY-XMD',
-                    session: 'TEDDY-XMD:~',
+                    status: 'error',
                     code: 'Service Currently Unavailable'
                 });
             }
